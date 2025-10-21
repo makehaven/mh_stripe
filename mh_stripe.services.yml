@@ -1,0 +1,4 @@
+services:
+  mh_stripe.helper:
+    class: 'Drupal\\mh_stripe\\Service\\StripeHelper'
+    arguments: ['@config.factory']

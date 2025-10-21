@@ -1,0 +1,7 @@
+mh_stripe.open_customer:
+  path: '/admin/stripe/open-customer/{user}'
+  defaults:
+    _controller: '\Drupal\mh_stripe\Controller\OpenCustomerController::open'
+  requirements:
+    _permission: 'administer users'
+    user: '\d+'
