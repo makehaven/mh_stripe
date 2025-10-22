@@ -5,3 +5,12 @@ mh_stripe.open_customer:
   requirements:
     _permission: 'administer users'
     user: '\d+'
+mh_stripe.settings:
+  path: '/admin/config/services/mh-stripe'
+  defaults:
+    _form: '\Drupal\mh_stripe\Form\StripeSettingsForm'
+    _title: 'MakeHaven Stripe'
+  requirements:
+    _permission: 'administer site configuration'
+  options:
+    _admin_route: TRUE

@@ -1,0 +1,6 @@
+mh_stripe.settings:
+  title: 'MakeHaven Stripe'
+  description: 'Configure the MakeHaven Stripe integration.'
+  parent: system.admin_config_services
+  route_name: mh_stripe.settings
+  weight: 100

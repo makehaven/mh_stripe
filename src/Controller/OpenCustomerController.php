@@ -15,7 +15,11 @@ final class OpenCustomerController extends ControllerBase {
     $account = $this->entityTypeManager()->getStorage('user')->load($user);
     if (!$account) { throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException(); }
 
-    $field = 'field_stripe_customer_id';
+    $field = $this->helper->customerFieldName();
+    if (!$account->hasField($field)) {
+      $this->messenger()->addError($this->t('The configured Stripe customer field (@field) does not exist on this site. Update the MakeHaven Stripe settings.', ['@field' => $field]));
+      return new RedirectResponse(Url::fromRoute('entity.user.canonical', ['user' => $user])->toString());
+    }
     $cus = (string) ($account->get($field)->value ?? '');
 
     if (!$cus) {

@@ -3,6 +3,7 @@
 namespace Drupal\mh_stripe\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Site\Settings;
 use Stripe\StripeClient;
 
@@ -10,15 +11,37 @@ final class StripeHelper {
   private StripeClient $stripe;
   private string $dashboardBase;
   private string $portalInvoicesConfig;
+  private string $customerField;
+  private ImmutableConfig $config;
 
   public function __construct(ConfigFactoryInterface $configFactory) {
-    $secret = (string) Settings::get('stripe.secret', '');
-    if (!$secret) {
+    $this->config = $configFactory->get('mh_stripe.settings');
+
+    $secret = trim((string) $this->config->get('stripe_secret'));
+    if ($secret === '') {
+      $secret = (string) Settings::get('stripe.secret', '');
+    }
+    if ($secret === '') {
       throw new \RuntimeException('Stripe secret key not configured.');
     }
+
     $this->stripe = new StripeClient($secret);
     $this->dashboardBase = str_contains($secret, '_test_') ? 'https://dashboard.stripe.com/test' : 'https://dashboard.stripe.com';
-    $this->portalInvoicesConfig = (string) Settings::get('stripe.portal_configuration_invoices', '');
+
+    $portalConfig = trim((string) $this->config->get('portal_configuration_id'));
+    if ($portalConfig === '') {
+      $portalConfig = (string) Settings::get('stripe.portal_configuration_invoices', '');
+    }
+    $this->portalInvoicesConfig = $portalConfig;
+
+    $this->customerField = (string) $this->config->get('customer_field');
+    if ($this->customerField === '') {
+      $this->customerField = 'field_stripe_customer_id';
+    }
+  }
+
+  public function customerFieldName(): string {
+    return $this->customerField;
   }
 
   public function findOrCreateCustomerIdByEmail(string $email, array $createAttrs = []): string {

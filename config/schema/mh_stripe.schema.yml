@@ -1,0 +1,13 @@
+mh_stripe.settings:
+  type: config_object
+  label: 'MakeHaven Stripe settings'
+  mapping:
+    stripe_secret:
+      type: string
+      label: 'Stripe secret key'
+    customer_field:
+      type: string
+      label: 'User field to store Stripe customer ID'
+    portal_configuration_id:
+      type: string
+      label: 'Stripe billing portal configuration ID'
