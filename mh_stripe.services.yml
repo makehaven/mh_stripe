@@ -1,4 +1,9 @@
 services:
   mh_stripe.helper:
-    class: 'Drupal\\mh_stripe\\Service\\StripeHelper'
+    class: Drupal\mh_stripe\Service\StripeHelper
     arguments: ['@config.factory']
+  mh_stripe.access_check:
+    class: Drupal\mh_stripe\Access\StripeAccessCheck
+    arguments: ['@config.factory']
+    tags:
+      - { name: access_check, applies_to: _stripe_access_check }

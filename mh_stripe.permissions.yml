@@ -1,0 +1,6 @@
+administer mh stripe:
+  title: 'Administer MakeHaven Stripe settings'
+open stripe customer:
+  title: 'Open Stripe Customer (staff)'
+open stripe portal:
+  title: 'Open Stripe Billing Portal (member)'
