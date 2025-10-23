@@ -1,5 +1,9 @@
 {
-  "require": {
-    "stripe/stripe-php": "^14"
-  }
+    "name": "makehaven/mh_stripe",
+    "type": "drupal-custom-module",
+    "description": "A description for the Stripe module.",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "stripe/stripe-php": "^14"
+    }
 }
