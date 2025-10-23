@@ -1,7 +1,7 @@
 mh_stripe.settings:
   path: '/admin/config/services/mh-stripe'
   defaults:
-    _form: '\Drupal\mh_stripe\Form\MhStripeSettingsForm'
+    _form: '\Drupal\mh_stripe\Form\StripeSettingsForm'
     _title: 'MakeHaven Stripe settings'
   requirements:
     _permission: 'administer mh stripe'

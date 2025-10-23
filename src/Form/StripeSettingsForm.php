@@ -4,7 +4,7 @@ namespace Drupal\mh_stripe\Form;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
-class MhStripeSettingsForm extends ConfigFormBase {
+class StripeSettingsForm extends ConfigFormBase {
   public function getFormId() {
     return 'mh_stripe_settings_form';
   }
