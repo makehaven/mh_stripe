@@ -9,7 +9,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 final class OpenCustomerController extends ControllerBase {
-  public function __construct(private StripeHelper $helper, private ConfigFactoryInterface $configFactory) {}
+  public function __construct(private StripeHelper $helper, protected ConfigFactoryInterface $configFactory) {}
   public static function create(ContainerInterface $c): self {
     return new self($c->get('mh_stripe.helper'), $c->get('config.factory'));
   }
