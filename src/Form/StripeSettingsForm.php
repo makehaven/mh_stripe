@@ -16,6 +16,25 @@ class StripeSettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('mh_stripe.settings');
 
+    $form['setup_instructions'] = [
+      '#type' => 'markup',
+      '#markup' => $this->t('
+        <h3>Stripe Configuration Instructions</h3>
+        <p>Follow these steps to connect your Drupal site with Stripe:</p>
+        <ol>
+          <li>Log in to your <a href="https://dashboard.stripe.com/" target="_blank">Stripe Dashboard</a>.</li>
+          <li>Navigate to the <a href="https://dashboard.stripe.com/apikeys" target="_blank">API Keys</a> section.</li>
+          <li>
+            <strong>To enable Test Mode</strong>, use your "Test" API keys (e.g., sk_test_...).
+            <strong>To go live</strong>, use your "Live" API keys (e.g., sk_live_...).
+          </li>
+          <li>
+            Choose your desired API key source below. For production environments, it is recommended to store keys in <code>settings.php</code> for better security.
+          </li>
+        </ol>
+      '),
+    ];
+
     $form['api_key_source'] = [
       '#type' => 'select',
       '#title' => $this->t('API key source'),
