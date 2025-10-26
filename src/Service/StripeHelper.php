@@ -1,4 +1,5 @@
 <?php
+
 namespace Drupal\mh_stripe\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
