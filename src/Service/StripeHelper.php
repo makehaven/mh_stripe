@@ -40,7 +40,7 @@ final class StripeHelper {
       'query' => sprintf('email:"%s"', $email),
       'limit' => 5,
     ]);
-    if (!empty($result->data)) {
+    if ($result->data) {
       usort($result->data, fn($a,$b) => $b->created <=> $a->created);
       return $result->data[0]->id;
     }
@@ -49,17 +49,16 @@ final class StripeHelper {
   }
 
   public function customerDashboardUrl(string $customerId): string {
-    return "{$this->dashboardBase}/customers/{$customerId}";
+    return sprintf('%s/customers/%s', $this->dashboardBase, $customerId);
   }
 
-  public function subscriptionDashboardUrl(string $subscriptionId): string {
-    return "{$this->dashboardBase}/subscriptions/{$subscriptionId}";
-  }
-
-  public function createPortalUrl(string $customerId, string $returnUrl, ?string $configuration = null): string {
-    $params = ['customer' => $customerId, 'return_url' => $returnUrl];
-    if ($configuration) {
-      $params['configuration'] = $configuration;
+  public function createPortalUrl(string $customerId, string $returnUrl): string {
+    $params = [
+      'customer' => $customerId,
+      'return_url' => $returnUrl,
+    ];
+    if ($this->portalInvoicesConfig && str_starts_with($this->portalInvoicesConfig, 'pc_')) {
+      $params['configuration'] = $this->portalInvoicesConfig;
     } elseif ($this->portalInvoicesConfig) {
       $params['configuration'] = $this->portalInvoicesConfig;
     }
@@ -73,6 +72,10 @@ final class StripeHelper {
       'items' => [['price' => $priceId]],
       'metadata' => $metadata,
     ]);
-    return ['id' => $sub->id];
+    return [
+      'id' => $sub->id,
+      'status' => $sub->status,
+      'client_secret' => $sub->latest_invoice?->payment_intent?->client_secret,
+    ];
   }
 }
