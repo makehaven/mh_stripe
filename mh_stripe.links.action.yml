@@ -1,0 +1,11 @@
+mh_stripe.open_customer_action:
+  route_name: mh_stripe.open_customer
+  title: 'Open in Stripe (Customer)'
+  appears_on:
+    - entity.user.canonical
+
+mh_stripe.portal_self_action:
+  route_name: mh_stripe.portal_self
+  title: 'View Stripe Invoices'
+  appears_on:
+    - entity.user.canonical

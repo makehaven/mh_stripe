@@ -1,3 +1,7 @@
 stripe_secret: ''
+api_key_source: settings
+api_key: ''
 customer_field: ''
 portal_configuration_id: ''
+show_member_portal_link: false
+show_staff_customer_link: false

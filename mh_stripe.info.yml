@@ -1,5 +1,5 @@
 name: MakeHaven Stripe
 type: module
 description: Core Stripe helpers (customer id on user, portal, dashboard links).
-core_version_requirement: ^10 || ^11
+core_version_requirement: ^9 || ^10 || ^11
 package: MakeHaven

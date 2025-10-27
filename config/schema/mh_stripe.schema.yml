@@ -5,9 +5,21 @@ mh_stripe.settings:
     stripe_secret:
       type: string
       label: 'Stripe secret key'
+    api_key_source:
+      type: string
+      label: 'API key source'
+    api_key:
+      type: string
+      label: 'API key (secret)'
     customer_field:
       type: string
       label: 'User field to store Stripe customer ID'
     portal_configuration_id:
       type: string
       label: 'Stripe billing portal configuration ID'
+    show_member_portal_link:
+      type: boolean
+      label: 'Show member portal link'
+    show_staff_customer_link:
+      type: boolean
+      label: 'Show staff customer link'
