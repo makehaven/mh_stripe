@@ -5,6 +5,7 @@ namespace Drupal\mh_stripe\Controller;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Url;
 use Drupal\mh_stripe\Service\StripeHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -14,14 +15,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final class PortalSelfController extends ControllerBase {
 
-  public function __construct(private StripeHelper $helper, private AccountInterface $currentUser, private ConfigFactoryInterface $configFactory) {}
+  public function __construct(private StripeHelper $helper, private AccountInterface $mhStripeCurrentUser, private ConfigFactoryInterface $mhStripeConfigFactory) {}
 
   public static function create(ContainerInterface $container): self {
     return new self($container->get('mh_stripe.helper'), $container->get('current_user'), $container->get('config.factory'));
   }
 
   public function portal(int $user): RedirectResponse {
-    $config = $this->configFactory->get('mh_stripe.settings');
+    $config = $this->mhStripeConfigFactory->get('mh_stripe.settings');
     $userUrl = Url::fromRoute('entity.user.canonical', ['user' => $user]);
     $redirect = new RedirectResponse($userUrl->toString());
 
@@ -30,7 +31,7 @@ final class PortalSelfController extends ControllerBase {
       return $redirect;
     }
 
-    if ((int) $this->currentUser->id() !== $user && !$this->currentUser->hasPermission('open stripe portal')) {
+    if ((int) $this->mhStripeCurrentUser->id() !== $user && !$this->mhStripeCurrentUser->hasPermission('open stripe portal')) {
       throw new AccessDeniedHttpException();
     }
 
@@ -54,7 +55,7 @@ final class PortalSelfController extends ControllerBase {
     try {
       $returnUrl = Url::fromRoute('entity.user.canonical', ['user' => $user], ['absolute' => TRUE])->toString();
       $portalUrl = $this->helper->createPortalUrl($customerId, $returnUrl);
-      return new RedirectResponse($portalUrl);
+      return new TrustedRedirectResponse($portalUrl);
     }
     catch (\Exception $e) {
       $this->messenger()->addError($this->t('Could not create Stripe Billing Portal session: @message', ['@message' => $e->getMessage()]));

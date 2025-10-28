@@ -4,6 +4,7 @@ namespace Drupal\mh_stripe\Controller;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Url;
 use Drupal\mh_stripe\Service\StripeHelper;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -12,14 +13,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final class OpenCustomerController extends ControllerBase {
 
-  public function __construct(private StripeHelper $helper, private ConfigFactoryInterface $configFactory) {}
+  public function __construct(private StripeHelper $helper, private ConfigFactoryInterface $mhStripeConfigFactory) {}
 
   public static function create(ContainerInterface $container): self {
     return new self($container->get('mh_stripe.helper'), $container->get('config.factory'));
   }
 
   public function open(int $user): RedirectResponse {
-    $config = $this->configFactory->get('mh_stripe.settings');
+    $config = $this->mhStripeConfigFactory->get('mh_stripe.settings');
     $userUrl = Url::fromRoute('entity.user.canonical', ['user' => $user]);
     $redirect = new RedirectResponse($userUrl->toString());
 
@@ -58,7 +59,7 @@ final class OpenCustomerController extends ControllerBase {
       }
     }
 
-    return new RedirectResponse($this->helper->customerDashboardUrl($customerId));
+    return new TrustedRedirectResponse($this->helper->customerDashboardUrl($customerId));
   }
 
 }

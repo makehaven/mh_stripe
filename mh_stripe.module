@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Provides hooks for the MakeHaven Stripe module.
+ */
+
+/**
+ * Implements hook_menu_local_actions_alter().
+ */
+function mh_stripe_menu_local_actions_alter(array &$local_actions): void {
+  if (empty($local_actions)) {
+    return;
+  }
+
+  $route_provider = \Drupal::service('router.route_provider');
+  foreach (['mh_stripe.open_customer_action', 'mh_stripe.portal_self_action'] as $action_id) {
+    if (!isset($local_actions[$action_id])) {
+      continue;
+    }
+
+    $route_name = $local_actions[$action_id]['route_name'] ?? '';
+    if ($route_name === '') {
+      unset($local_actions[$action_id]);
+      continue;
+    }
+
+    try {
+      $route_provider->getRouteByName($route_name);
+    }
+    catch (\Symfony\Component\Routing\Exception\RouteNotFoundException) {
+      unset($local_actions[$action_id]);
+    }
+  }
+}

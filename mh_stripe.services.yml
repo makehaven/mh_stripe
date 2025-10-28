@@ -4,6 +4,6 @@ services:
     arguments: ['@config.factory']
   mh_stripe.access_check:
     class: Drupal\mh_stripe\Access\StripeAccessCheck
-    arguments: ['@config.factory']
+    arguments: ['@config.factory', '@entity_type.manager']
     tags:
       - { name: access_check, applies_to: _stripe_access_check }

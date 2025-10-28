@@ -55,6 +55,7 @@ final class StripeSettingsForm extends ConfigFormBase {
       $stored_secret = trim((string) $config->get('api_key'));
     }
     $secret_set = $stored_secret !== '';
+    $secret_preview = $secret_set ? $this->formatSecretPreview($stored_secret) : '';
 
     $api_source = (string) $config->get('api_key_source');
     if ($api_source === '') {
@@ -76,7 +77,7 @@ final class StripeSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Stripe secret key'),
       '#description' => $secret_set
-        ? $this->t('A secret key is currently stored in Drupal configuration and is hidden here. Enter a new value to replace it, or check "Remove stored secret" to fall back to settings.php.')
+        ? $this->t('Stored key: @preview. Leave the field blank to keep it, enter a new value to replace it, or check "Remove stored secret" to fall back to settings.php.', ['@preview' => $secret_preview])
         : $this->t('Optional. Enter your Stripe secret key to store it in Drupal configuration. Leave blank to rely on settings.php or the Key module.'),
       '#default_value' => '',
       '#attributes' => ['autocomplete' => 'off'],
@@ -191,6 +192,21 @@ final class StripeSettingsForm extends ConfigFormBase {
       ->save();
 
     parent::submitForm($form, $form_state);
+  }
+
+  private function formatSecretPreview(string $secret): string {
+    $secret = trim($secret);
+    if ($secret === '') {
+      return '';
+    }
+
+    if (strlen($secret) <= 8) {
+      return $secret;
+    }
+
+    $start = substr($secret, 0, 8);
+    $end = substr($secret, -4);
+    return $start . '...' . $end;
   }
 
 }
