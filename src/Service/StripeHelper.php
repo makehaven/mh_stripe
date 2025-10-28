@@ -82,13 +82,19 @@ final class StripeHelper {
       'customer' => $customerId,
       'items' => [['price' => $priceId]],
       'metadata' => $metadata,
+      'expand' => ['items.data'],
     ]);
 
     return [
       'id' => $sub->id,
       'status' => $sub->status,
+      'item_id' => $sub->items->data[0]->id ?? NULL,
       'client_secret' => $sub->latest_invoice?->payment_intent?->client_secret,
     ];
+  }
+
+  public function client(): StripeClient {
+    return $this->getStripe();
   }
 
   private function getStripe(): StripeClient {
