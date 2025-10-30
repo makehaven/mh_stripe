@@ -16,7 +16,7 @@ final class OpenCustomerController extends ControllerBase {
   public function __construct(private StripeHelper $helper, private ConfigFactoryInterface $mhStripeConfigFactory) {}
 
   public static function create(ContainerInterface $container): self {
-    return new self($container->get('mh_stripe.helper'), $container->get('config.factory'));
+    return new self($container->get('mh_stripe.stripe_helper'), $container->get('config.factory'));
   }
 
   public function open(int $user): RedirectResponse {
