@@ -1,7 +1,8 @@
 services:
-  mh_stripe.helper:
+  mh_stripe.stripe_helper:
     class: Drupal\mh_stripe\Service\StripeHelper
     arguments: ['@config.factory']
+  mh_stripe.helper: '@mh_stripe.stripe_helper'
   mh_stripe.access_check:
     class: Drupal\mh_stripe\Access\StripeAccessCheck
     arguments: ['@config.factory', '@entity_type.manager']
