@@ -39,8 +39,14 @@ final class StripeHelper {
   }
 
   public function findOrCreateCustomerIdByEmail(string $email, array $createAttrs = []): string {
+    $email = trim($email);
+    if ($email === '') {
+      throw new \InvalidArgumentException('Email address is required to look up a Stripe customer.');
+    }
+
+    $safeEmail = $this->escapeStripeSearchValue($email);
     $result = $this->getStripe()->customers->search([
-      'query' => sprintf('email:"%s"', $email),
+      'query' => sprintf('email:"%s"', $safeEmail),
       'limit' => 5,
     ]);
     if (!empty($result->data)) {
@@ -103,6 +109,13 @@ final class StripeHelper {
     }
 
     return $this->stripe;
+  }
+
+  /**
+   * Escape user-provided values for Stripe's search syntax.
+   */
+  private function escapeStripeSearchValue(string $value): string {
+    return addcslashes($value, "\\\"\n\r");
   }
 
   private function resolveSecret(): string {
