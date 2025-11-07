@@ -25,7 +25,10 @@ in Stripe if one does not already exist.
    *Configuration → Web services*). From there you can:
    - Select the user field that should store the Stripe customer ID.
    - Paste a Stripe Billing Portal configuration ID (`pc_...`) if you want it
-     applied automatically when generating portal sessions.
+     applied automatically when generating portal sessions. Create the ID from
+     the Stripe Dashboard → Settings → Billing → Customer portal, add a new
+     configuration with the limited actions you want members to take (e.g.
+     view invoices only), then copy the generated `pc_...` value into the form.
    - Store a Stripe secret key directly in Drupal config if desired.
 4. **Secret management guidance** – For production consider keeping secrets in
    `settings.php` or a Key module entry instead of Drupal config. If you leave
@@ -34,6 +37,12 @@ in Stripe if one does not already exist.
    the form to return to file-based configuration.
 5. **Permissions** – The shortcut route piggybacks on the `administer users`
    permission. Only grant that to trusted staff since it exposes Stripe access.
+6. **Backfill stored customer IDs** – After configuring the module use the
+   *Fetch existing Stripe customers* button on the settings form or run `drush
+   mh-stripe:fetch-existing-customers` to populate the Stripe customer field for
+   any user whose email already matches a customer in Stripe. Use
+   `drush mh-stripe:backfill-customers` only if you also want to create Stripe
+   customers for users that do not already have one.
 
 ## Using the customer shortcut
 1. Visit a user's Drupal profile (`/user/{uid}`) so you have the UID handy.

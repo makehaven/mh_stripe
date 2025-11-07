@@ -2,19 +2,33 @@
 
 namespace Drupal\mh_stripe\Form;
 
+use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\field\FieldConfigInterface;
+use Drupal\mh_stripe\Service\ExistingCustomerFetcher;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 final class StripeSettingsForm extends ConfigFormBase {
 
-  public function __construct(private EntityFieldManagerInterface $entityFieldManager) {}
+  private EntityFieldManagerInterface $entityFieldManager;
+  private ExistingCustomerFetcher $existingCustomerFetcher;
+
+  public function __construct(
+    EntityFieldManagerInterface $entityFieldManager,
+    ExistingCustomerFetcher $existingCustomerFetcher,
+  ) {
+    $this->entityFieldManager = $entityFieldManager;
+    $this->existingCustomerFetcher = $existingCustomerFetcher;
+  }
 
   public static function create(ContainerInterface $container): self {
-    return new self($container->get('entity_field.manager'));
+    return new self(
+      $container->get('entity_field.manager'),
+      $container->get('mh_stripe.existing_customer_fetcher'),
+    );
   }
 
   public function getFormId(): string {
@@ -118,7 +132,7 @@ final class StripeSettingsForm extends ConfigFormBase {
     $form['portal_configuration_id'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Billing portal configuration ID'),
-      '#description' => $this->t('Optional. Provide a Stripe Billing Portal configuration ID (pc_...) to use by default when creating portal sessions.'),
+      '#description' => $this->t('Optional but recommended. Create a Billing Portal configuration in Stripe (Settings → Billing → Customer portal → + Add configuration), enable only the features you want members to access, then copy the generated ID (pc_...) into this field. Use the Test configuration ID on dev/staging and the Live ID on production so each environment opens the matching portal experience.'),
       '#default_value' => $config->get('portal_configuration_id') ?: '',
     ];
 
@@ -135,7 +149,18 @@ final class StripeSettingsForm extends ConfigFormBase {
       '#default_value' => (bool) $config->get('show_staff_customer_link'),
     ];
 
-    return parent::buildForm($form, $form_state);
+    $form = parent::buildForm($form, $form_state);
+
+    $form['actions']['fetch_existing_customers'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Fetch existing Stripe customers'),
+      '#button_type' => 'secondary',
+      '#submit' => ['::submitFetchExistingCustomers'],
+      '#limit_validation_errors' => [],
+      '#description' => $this->t('Batch fetch existing customer IDs for users whose emails already match a Stripe customer.'),
+    ];
+
+    return $form;
   }
 
   public function validateForm(array &$form, FormStateInterface $form_state): void {
@@ -192,6 +217,101 @@ final class StripeSettingsForm extends ConfigFormBase {
       ->save();
 
     parent::submitForm($form, $form_state);
+  }
+
+  public function submitFetchExistingCustomers(array &$form, FormStateInterface $form_state): void {
+    $config = $this->config('mh_stripe.settings');
+    $field = (string) $config->get('customer_field');
+    if ($field === '') {
+      $this->messenger()->addError($this->t('Select and save a Stripe customer ID field before running the fetch.'));
+      return;
+    }
+
+    $uids = $this->existingCustomerFetcher->candidateUserIds();
+    if (empty($uids)) {
+      $this->messenger()->addStatus($this->t('All users already have a stored Stripe customer ID or lack an email address.'));
+      return;
+    }
+
+    $batch = (new BatchBuilder())
+      ->setTitle($this->t('Fetching existing Stripe customer IDs'))
+      ->setInitMessage($this->t('Preparing batch fetch...'))
+      ->setProgressMessage($this->t('Processed @current of @total users.'))
+      ->setErrorMessage($this->t('The fetch process encountered an error.'))
+      ->setFinishCallback([self::class, 'batchFetchExistingFinished']);
+
+    foreach (array_chunk($uids, 25) as $chunk) {
+      $batch->addOperation([self::class, 'batchFetchExistingProcess'], [$chunk]);
+    }
+
+    batch_set($batch->toArray());
+    $form_state->setRebuild();
+  }
+
+  public static function batchFetchExistingProcess(array $uids, array &$context): void {
+    /** @var \Drupal\mh_stripe\Service\ExistingCustomerFetcher $fetcher */
+    $fetcher = \Drupal::service('mh_stripe.existing_customer_fetcher');
+    $results = $context['results'] ?? [
+      'updated' => 0,
+      'skipped' => 0,
+      'missing_field' => 0,
+      'no_email' => 0,
+      'errors' => 0,
+    ];
+
+    foreach ($uids as $uid) {
+      $result = $fetcher->processUser((int) $uid);
+      switch ($result['status']) {
+        case ExistingCustomerFetcher::STATUS_UPDATED:
+          $results['updated']++;
+          break;
+
+        case ExistingCustomerFetcher::STATUS_SKIPPED:
+          $results['skipped']++;
+          break;
+
+        case ExistingCustomerFetcher::STATUS_MISSING_FIELD:
+          $results['missing_field']++;
+          break;
+
+        case ExistingCustomerFetcher::STATUS_NO_EMAIL:
+          $results['no_email']++;
+          break;
+
+        case ExistingCustomerFetcher::STATUS_ERROR:
+        default:
+          $results['errors']++;
+          break;
+      }
+
+      $context['message'] = \Drupal::translation()->translate('Processing user @uid', ['@uid' => $uid]);
+    }
+
+    $context['results'] = $results;
+  }
+
+  public static function batchFetchExistingFinished(bool $success, array $results, array $operations): void {
+    $messenger = \Drupal::messenger();
+    $translator = \Drupal::translation();
+
+    if (!$success) {
+      $messenger->addError($translator->translate('Fetching existing Stripe customers did not complete.'));
+      return;
+    }
+
+    $updated = (int) ($results['updated'] ?? 0);
+    $skipped = (int) ($results['skipped'] ?? 0);
+    $missingField = (int) ($results['missing_field'] ?? 0);
+    $noEmail = (int) ($results['no_email'] ?? 0);
+    $errors = (int) ($results['errors'] ?? 0);
+
+    $messenger->addStatus($translator->translate('Fetched existing Stripe customers. Updated @updated, skipped @skipped, missing field @missing, no email @no_email, errors @errors.', [
+      '@updated' => $updated,
+      '@skipped' => $skipped,
+      '@missing' => $missingField,
+      '@no_email' => $noEmail,
+      '@errors' => $errors,
+    ]));
   }
 
   private function formatSecretPreview(string $secret): string {

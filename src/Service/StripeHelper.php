@@ -39,23 +39,19 @@ final class StripeHelper {
   }
 
   public function findOrCreateCustomerIdByEmail(string $email, array $createAttrs = []): string {
-    $email = trim($email);
-    if ($email === '') {
-      throw new \InvalidArgumentException('Email address is required to look up a Stripe customer.');
-    }
-
-    $safeEmail = $this->escapeStripeSearchValue($email);
-    $result = $this->getStripe()->customers->search([
-      'query' => sprintf('email:"%s"', $safeEmail),
-      'limit' => 5,
-    ]);
-    if (!empty($result->data)) {
-      usort($result->data, static fn($a, $b) => $b->created <=> $a->created);
-      return $result->data[0]->id;
+    $email = $this->normalizeEmail($email);
+    $existing = $this->lookupCustomerIdByEmail($email);
+    if ($existing !== NULL) {
+      return $existing;
     }
 
     $created = $this->getStripe()->customers->create(array_merge(['email' => $email], $createAttrs));
     return $created->id;
+  }
+
+  public function findExistingCustomerIdByEmail(string $email): ?string {
+    $email = $this->normalizeEmail($email);
+    return $this->lookupCustomerIdByEmail($email);
   }
 
   public function customerDashboardUrl(string $customerId): string {
@@ -109,6 +105,29 @@ final class StripeHelper {
     }
 
     return $this->stripe;
+  }
+
+  private function normalizeEmail(string $email): string {
+    $email = trim($email);
+    if ($email === '') {
+      throw new \InvalidArgumentException('Email address is required to look up a Stripe customer.');
+    }
+
+    return $email;
+  }
+
+  private function lookupCustomerIdByEmail(string $email): ?string {
+    $safeEmail = $this->escapeStripeSearchValue($email);
+    $result = $this->getStripe()->customers->search([
+      'query' => sprintf('email:"%s"', $safeEmail),
+      'limit' => 5,
+    ]);
+    if (empty($result->data)) {
+      return NULL;
+    }
+
+    usort($result->data, static fn($a, $b) => $b->created <=> $a->created);
+    return $result->data[0]->id;
   }
 
   /**

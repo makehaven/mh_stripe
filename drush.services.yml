@@ -1,6 +1,6 @@
 services:
   mh_stripe.commands:
     class: \Drupal\mh_stripe\Commands\MhStripeCommands
-    arguments: ['@mh_stripe.stripe_helper', '@entity_type.manager']
+    arguments: ['@mh_stripe.stripe_helper', '@entity_type.manager', '@mh_stripe.existing_customer_fetcher']
     tags:
       - { name: drush.command }

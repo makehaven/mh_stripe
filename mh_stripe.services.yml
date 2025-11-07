@@ -3,6 +3,9 @@ services:
     class: Drupal\mh_stripe\Service\StripeHelper
     arguments: ['@config.factory']
   mh_stripe.helper: '@mh_stripe.stripe_helper'
+  mh_stripe.existing_customer_fetcher:
+    class: Drupal\mh_stripe\Service\ExistingCustomerFetcher
+    arguments: ['@entity_type.manager', '@mh_stripe.stripe_helper']
   mh_stripe.access_check:
     class: Drupal\mh_stripe\Access\StripeAccessCheck
     arguments: ['@config.factory', '@entity_type.manager']
