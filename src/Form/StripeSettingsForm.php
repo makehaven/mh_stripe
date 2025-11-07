@@ -13,8 +13,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 final class StripeSettingsForm extends ConfigFormBase {
 
-  private EntityFieldManagerInterface $entityFieldManager;
-  private ExistingCustomerFetcher $existingCustomerFetcher;
+  protected EntityFieldManagerInterface $entityFieldManager;
+  protected ExistingCustomerFetcher $existingCustomerFetcher;
 
   public function __construct(
     EntityFieldManagerInterface $entityFieldManager,
