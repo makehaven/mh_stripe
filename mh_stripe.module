@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
+use Drupal\user\UserInterface;
+
 /**
  * @file
  * Provides hooks for the MakeHaven Stripe module.
@@ -34,4 +38,46 @@ function mh_stripe_menu_local_actions_alter(array &$local_actions): void {
       unset($local_actions[$action_id]);
     }
   }
+}
+
+/**
+ * Implements hook_makerspace_user_links_links().
+ */
+function mh_stripe_makerspace_user_links_links(UserInterface $account, AccountInterface $viewer): array {
+  $links = [];
+  $route_parameters = ['user' => $account->id()];
+
+  if ($viewer->hasPermission('open stripe customer')) {
+    $links[] = [
+      'id' => 'stripe_customer_dashboard',
+      'title' => t('Stripe Customer'),
+      'url' => Url::fromRoute('mh_stripe.open_customer', $route_parameters, [
+        'attributes' => [
+          'target' => '_blank',
+          'rel' => 'noopener',
+        ],
+      ]),
+      'description' => t('Open or create the Stripe customer record.'),
+      'category' => t('Billing'),
+      'weight' => -60,
+    ];
+  }
+
+  if ($viewer->hasPermission('open stripe portal')) {
+    $links[] = [
+      'id' => 'stripe_billing_portal',
+      'title' => t('Stripe Billing Portal'),
+      'url' => Url::fromRoute('mh_stripe.portal_self', $route_parameters, [
+        'attributes' => [
+          'target' => '_blank',
+          'rel' => 'noopener',
+        ],
+      ]),
+      'description' => t('Launch the member billing portal.'),
+      'category' => t('Billing'),
+      'weight' => -55,
+    ];
+  }
+
+  return $links;
 }
